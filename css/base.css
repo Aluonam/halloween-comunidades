@@ -1,0 +1,111 @@
+/* Paleta y tipografía del cartel */
+:root {
+  --night: #1b1030;
+  --sky: #2a1748;
+  --purple: #3d2463;
+  --moon: #f8e3b0;
+  --pumpkin: #f47b20;
+  --slime: #8fdc45;
+  --stone: #6f6985;
+  --ink: #0d0814;
+  --text: #fdf4e3;
+  --muted: #b9a8d6;
+  --radius: 16px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: clip;
+  font: 1.2rem/1.45 "Patrick Hand", "Comic Sans MS", cursive;
+  color: var(--text);
+  background: linear-gradient(var(--night), #120a22) fixed;
+  background-color: var(--night);
+}
+
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 0 16px 3rem;
+}
+
+h1, h2 {
+  font-family: "Creepster", cursive;
+  font-weight: normal;
+  letter-spacing: 0.04em;
+  color: var(--pumpkin);
+  margin: 0 0 0.5rem;
+}
+h2 { font-size: 2.4rem; text-shadow: 0 0 14px #f47b2066; }
+
+a { color: var(--pumpkin); }
+button { font: inherit; }
+
+.btn {
+  display: inline-block;
+  margin: 0.4rem 0.2rem;
+  padding: 0.6rem 1.3rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--pumpkin);
+  color: var(--ink);
+  font-weight: bold;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #8a3a05, 0 0 18px #f47b2055;
+  transition: transform 0.15s;
+}
+.btn:hover { transform: translateY(-2px) rotate(-1deg); }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a3a05; }
+.btn.alt { background: var(--moon); box-shadow: 0 4px 0 #a88a4c; }
+.btn.whatsapp { background: #25d366; box-shadow: 0 4px 0 #128c4a; }
+
+.soon { color: var(--muted); }
+
+.lang {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 30;
+  padding: 0.3rem 0.9rem;
+  border: 2px solid var(--pumpkin);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* Tarjetas */
+.card {
+  margin-top: 2rem;
+  padding: 1.4rem 16px;
+  background: #0d0814cc;
+  border: 1px solid #f47b2044;
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px #0006;
+}
+.card p { margin: 0.4rem 0; }
+
+/* Bocadillo para elementos con data-say */
+.say { position: relative; }
+.say::after {
+  content: attr(data-say);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  padding: 0.2rem 0.7rem;
+  border-radius: 1rem;
+  background: #fff;
+  color: var(--ink);
+  font: 1.1rem "Patrick Hand", cursive;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 6px) scale(0.6);
+  transition: 0.2s;
+}
+.say.talk::after { opacity: 1; transform: translate(-50%, -6px) scale(1); }

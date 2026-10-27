@@ -1,0 +1,175 @@
+// Hoja de la comunidad: guarda las puertas que reparten y los peques inscritos.
+// Instalación: README → "Conectar la hoja de Google". Pega este archivo entero en Extensiones → Apps Script.
+
+// 🔑 Clave del panel del gestor (admin.html). Cámbiala por una solo tuya antes de implementar.
+const ADMIN_KEY = "cambia-esta-clave";
+
+const DOORS = { name: "puertas", cols: ["id", "calle", "numero", "etiquetas"] };
+const KIDS = { name: "peques", cols: ["id", "clave", "alias", "edad", "alergias", "creado", "actualizado"] };
+const LIMITS = { alias: 40, age: 20, allergy: 80, kids: 500, doors: 2000 };
+const TAGS = ["gluten", "nuts", "lactose", "egg"];
+
+// ---------- Entrada ----------
+
+// Abrir la URL en el navegador muestra los datos públicos (útil para comprobar que funciona).
+function doGet() {
+  return json(publicData());
+}
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  let out;
+  try {
+    const req = JSON.parse(e.postData.contents);
+    lock.waitLock(10000);
+    out = handle(req);
+  } catch (err) {
+    out = { error: err.code || "server" };
+    if (!err.code) console.error(err);
+  } finally {
+    lock.releaseLock();
+  }
+  return json(out);
+}
+
+const ACTIONS = {
+  public: () => publicData(),
+
+  // Familias: crean su inscripción y la cambian o borran con su clave privada.
+  kidCreate(r) {
+    const kid = cleanKid(r);
+    const sh = table(KIDS);
+    if (sh.getLastRow() - 1 >= LIMITS.kids) fail("full");
+    const id = Utilities.getUuid().slice(0, 8);
+    const token = Utilities.getUuid().replace(/-/g, "");
+    const now = new Date();
+    sh.appendRow([id, token, kid.alias, kid.age, kid.allergy, now, now]);
+    return { id, token };
+  },
+  kidGet(r) {
+    const { kid } = ownKid(r);
+    return { alias: kid.alias, age: kid.age, allergy: kid.allergy };
+  },
+  kidUpdate(r) {
+    const { row } = ownKid(r);
+    const kid = cleanKid(r);
+    table(KIDS).getRange(row, 3, 1, 5).setValues([[kid.alias, kid.age, kid.allergy, cell(row, 6), new Date()]]);
+    return { ok: true };
+  },
+  kidDelete(r) {
+    table(KIDS).deleteRow(ownKid(r).row);
+    return { ok: true };
+  },
+
+  // Gestor: todo pide la clave.
+  adminCheck(r) {
+    admin(r);
+    return { ok: true };
+  },
+  adminKids(r) {
+    admin(r);
+    return { kids: kids().map(({ id, alias, age, allergy }) => ({ id, alias, age, allergy })) };
+  },
+  adminKidDelete(r) {
+    admin(r);
+    const i = kids().findIndex((k) => k.id === r.id);
+    if (i < 0) fail("notfound");
+    table(KIDS).deleteRow(i + 2);
+    return { ok: true };
+  },
+  adminDoorsSave(r) {
+    admin(r);
+    const doors = (r.doors || []).slice(0, LIMITS.doors).map((d) => [
+      text(d.id, 80), text(d.street, 60), text(d.number, 10),
+      (d.tags || []).filter((t) => TAGS.includes(t)).join(" "),
+    ]).filter((d) => d[0]);
+    const sh = table(DOORS);
+    if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, DOORS.cols.length).clearContent();
+    if (doors.length) sh.getRange(2, 1, doors.length, DOORS.cols.length).setValues(doors);
+    return { ok: true };
+  },
+};
+
+function handle(req) {
+  const action = ACTIONS[req && req.action];
+  if (!action) fail("invalid");
+  return action(req);
+}
+
+// ---------- Datos ----------
+
+function publicData() {
+  const doors = rows(DOORS).map(([id, street, number, tags]) =>
+    ({ id, street, number, tags: tags ? tags.split(" ") : [] }));
+  return { doors, kids: kids().map(({ alias, age, allergy }) => ({ alias, age, allergy })) };
+}
+
+function kids() {
+  return rows(KIDS).map(([id, token, alias, age, allergy]) => ({ id, token, alias, age, allergy }));
+}
+
+function ownKid(r) {
+  const list = kids();
+  const i = list.findIndex((k) => k.id === r.id && k.token === r.token && r.token);
+  if (i < 0) fail("notfound");
+  return { kid: list[i], row: i + 2 };
+}
+
+function admin(r) {
+  if (ADMIN_KEY === "cambia-esta-clave" || r.key !== ADMIN_KEY) {
+    Utilities.sleep(1000); // frena a quien intente adivinar la clave
+    fail("auth");
+  }
+}
+
+function cleanKid(r) {
+  const kid = { alias: text(r.alias, LIMITS.alias), age: text(r.age, LIMITS.age), allergy: text(r.allergy, LIMITS.allergy) };
+  if (!kid.alias) fail("invalid");
+  return kid;
+}
+
+// Texto limpio y corto. Quita = + - @ del principio para que la hoja nunca lo trate como fórmula.
+function text(v, max) {
+  return String(v == null ? "" : v).trim().replace(/^[=+\-@]+/, "").slice(0, max);
+}
+
+// ---------- Hoja ----------
+
+// Pestaña con cabecera; se crea sola la primera vez. Todo se guarda como texto.
+function table(t) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(t.name);
+  if (!sh) {
+    sh = ss.insertSheet(t.name);
+    sh.getRange(1, 1, 1, t.cols.length).setValues([t.cols]).setFontWeight("bold");
+    sh.setFrozenRows(1);
+    sh.getRange("A:E").setNumberFormat("@");
+  }
+  return sh;
+}
+
+function rows(t) {
+  const sh = table(t);
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, t.cols.length).getDisplayValues();
+}
+
+function cell(row, col) {
+  return table(KIDS).getRange(row, col).getValue();
+}
+
+function fail(code) {
+  const err = new Error(code);
+  err.code = code;
+  throw err;
+}
+
+function json(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Ejecútala una vez desde el editor (▶ Ejecutar) para crear las pestañas y dar permisos.
+function setup() {
+  table(DOORS);
+  table(KIDS);
+}

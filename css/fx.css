@@ -1,0 +1,120 @@
+/* ---------- Murciélagos ---------- */
+.bats { position: fixed; inset: 0; z-index: 20; pointer-events: none; overflow: hidden; }
+.bat {
+  position: absolute;
+  left: -80px;
+  width: 54px;
+  fill: #07030d;
+  filter: drop-shadow(0 0 4px #c9a8ff66);
+  animation: fly 17s linear infinite;
+}
+.bat:nth-child(1) { top: 12%; }
+.bat:nth-child(2) { top: 34%; width: 38px; animation-delay: -6s; animation-duration: 22s; }
+.bat:nth-child(3) { top: 58%; animation-delay: -11s; }
+.bat svg { display: block; overflow: visible; }
+.bat .wl, .bat .wr { transform-origin: 50px 20px; animation: flap 0.22s ease-in-out infinite alternate; }
+.bat .wr { animation-name: flapR; }
+
+/* ---------- Araña ---------- */
+.spider {
+  position: absolute;
+  top: 0;
+  left: 18px;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 34px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  filter: drop-shadow(0 0 3px #c9a8ff88);
+  animation: dangle 5s ease-in-out infinite;
+}
+.spider .thread { width: 1px; height: 80px; background: #ffffff77; }
+.spider svg { width: 34px; }
+.spider.up { animation: none; transform: translateY(-120px); transition: transform 0.6s ease-in; }
+
+/* ---------- Caramelos ---------- */
+.candy {
+  position: fixed;
+  left: var(--x);
+  top: var(--y);
+  z-index: 50;
+  font-size: 1.5rem;
+  pointer-events: none;
+  animation: burst 1s ease-out forwards;
+}
+
+/* ---------- Aparición al hacer scroll ---------- */
+@supports (animation-timeline: view()) {
+  .reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% entry 50%; }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(40px); } }
+
+/* ---------- Animaciones ---------- */
+@keyframes twinkle { from { opacity: 0.15; } to { opacity: 1; } }
+@keyframes moonglow { to { box-shadow: 0 0 80px 30px #f8e3b055, 0 0 220px 90px #f47b2026; } }
+@keyframes flicker {
+  0%, 90%, 100% { opacity: 1; }
+  91% { opacity: 0.5; } 92% { opacity: 1; } 94% { opacity: 0.7; }
+}
+@keyframes candle {
+  0%, 100% { opacity: 1; }
+  40% { opacity: 0.75; } 45% { opacity: 0.95; } 70% { opacity: 0.8; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-18px) rotate(4deg); }
+}
+@keyframes wobble {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-10deg) scale(1.08); }
+  75% { transform: rotate(10deg) scale(1.08); }
+}
+@keyframes drift { to { transform: translateX(-50%); } }
+@keyframes bubble {
+  0% { transform: translateY(0) scale(0.4); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-46px) scale(1.1); opacity: 0; }
+}
+@keyframes fly {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(30vw, -40px); }
+  50% { transform: translate(60vw, 20px); }
+  75% { transform: translate(90vw, -20px); }
+  100% { transform: translate(calc(100vw + 160px), 0); }
+}
+@keyframes flap { from { transform: rotate(-20deg); } to { transform: rotate(25deg); } }
+@keyframes flapR { from { transform: rotate(20deg); } to { transform: rotate(-25deg); } }
+@keyframes dangle { 0%, 100% { transform: translateY(-20px); } 50% { transform: translateY(0); } }
+@keyframes burst {
+  60% { transform: translate(calc(var(--dx) * 0.8), var(--dy)) rotate(calc(var(--r) * 0.6)); opacity: 1; }
+  100% { transform: translate(var(--dx), calc(var(--dy) + 140px)) rotate(var(--r)); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .bats { display: none; }
+}
+
+/* ---------- Aviso ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 60;
+  margin: 0;
+  padding: 0.5rem 1.2rem;
+  border-radius: 99px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 6px 20px #0008;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 20px);
+  transition: 0.25s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }

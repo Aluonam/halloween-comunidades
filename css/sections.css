@@ -386,7 +386,8 @@ button.win:not(.on):hover { box-shadow: inset 0 0 0 2px var(--slime); }
 .kid-form h3, .kid-form + .mine p { margin: 0 0 0.5rem; color: var(--moon); font-weight: normal; font-size: 1.4rem; }
 .kid-form label { display: block; margin-bottom: 0.6rem; color: var(--muted); }
 .kid-form .pair { display: grid; grid-template-columns: 1fr 2fr; gap: 0.6rem; }
-input:not([type=checkbox]) {
+input:not([type=checkbox]):not([type=radio]), select {
+  color-scheme: dark;
   display: block;
   width: 100%;
   margin-top: 0.2rem;
@@ -413,3 +414,4 @@ input:focus { outline: none; border-color: var(--pumpkin); }
 .community { margin: 0.5rem 0 0; color: #8a3a05; font-size: 1.5rem; font-weight: bold; }
 .banner { position: relative; z-index: 5; margin: 0.8rem 0; padding: 0.6rem 1rem; border-radius: var(--radius); background: #f8e3b0; color: var(--ink); font-size: 1rem; text-align: center; }
 .banner a { color: #b4470d; }
+.address { margin: 0; padding: 0.15rem 0.4rem; background: #2e2050; border-inline: 3px solid #18102b; color: var(--moon); font-size: 0.95rem; text-align: center; }

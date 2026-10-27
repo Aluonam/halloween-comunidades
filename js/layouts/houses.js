@@ -1,10 +1,11 @@
-// Casas individuales: cada puerta es { id, street, number }. El gestor añade solo las que reparten.
+// Casas individuales: cada puerta es { id, street, number }. El gestor define las calles y añade las casas que reparten.
+import { config } from "../config.js";
 import { t } from "../i18n.js";
 import { esc } from "../sections/ui.js";
 
 export const nextKey = "nextStreet";
 export const countKey = "houseCount";
-export const total = 0; // no hay un total fijo de casas
+export const total = () => 0; // no hay un total fijo de casas
 
 // "Calle del Olmo" + "12" → "calle-del-olmo-12"
 export const idOf = (street, number) =>
@@ -13,9 +14,21 @@ export const idOf = (street, number) =>
 export const groupOf = (door) => door.street || "";
 const num = (door) => parseInt(door.number, 10) || 0;
 
-// Orden del juego: por calle y luego por número.
-export const sort = (doors) => [...doors].sort((a, b) =>
-  groupOf(a).localeCompare(groupOf(b)) || num(a) - num(b) || String(a.number).localeCompare(String(b.number)));
+// ¿Sigue existiendo su calle? (Si el gestor no ha definido calles, vale cualquiera.)
+export const fits = (door) => {
+  const { streets } = config.houses;
+  return !!door.number && (!streets.length || streets.includes(door.street));
+};
+
+// Orden del juego: por calle (en el orden que puso el gestor) y luego por número.
+export const sort = (doors) => {
+  const order = (d) => {
+    const i = config.houses.streets.indexOf(groupOf(d));
+    return i < 0 ? Infinity : i;
+  };
+  return [...doors].sort((a, b) => order(a) - order(b) || groupOf(a).localeCompare(groupOf(b)) ||
+    num(a) - num(b) || String(a.number).localeCompare(String(b.number)));
+};
 
 export const name = (door) => [door.street, door.number].filter(Boolean).join(" ");
 export const hint = (door) => t("hintHouse", { n: door.number });
@@ -35,12 +48,12 @@ export function riddle(door) {
 }
 
 export function scene(ui) {
-  const streets = [...new Set(sort(ui.doors).map(groupOf))];
-  if (!streets.length) return "";
+  const list = sort(ui.doors);
+  const streets = [...new Set(list.map(groupOf))];
   return streets.map((s) => `
     <article class="building street" data-group="${esc(s)}">
       <div class="roof"><span>${esc(s) || t("houses")}</span></div>
-      <div class="homes">${sort(ui.doors).filter((d) => groupOf(d) === s).map((d) => {
+      <div class="homes">${list.filter((d) => groupOf(d) === s).map((d) => {
         const lit = ui.shown(d.id);
         return lit ? ui.lit(lit, esc(d.number), "home") : ui.guess(d.id, esc(name(d)), esc(d.number), "home");
       }).join("")}</div>

@@ -9,5 +9,5 @@ export const render = () => `
     ${button(config.whatsapp, t("joinWhatsapp"), "whatsapp")}
   </section>
   <footer class="epitaph reveal">
-    <div class="grave"><b>R.I.P.</b><span>${t("epitaph")}</span><small>${config.date.slice(0, 10).split("-").reverse().join(" · ")}</small></div>
+    <div class="grave"><b>R.I.P.</b><span>${t("epitaph")}</span>${config.date ? `<small>${config.date.slice(0, 10).split("-").reverse().join(" · ")}</small>` : ""}</div>
   </footer>`;

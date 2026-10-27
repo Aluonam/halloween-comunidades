@@ -1,4 +1,4 @@
-// Hoja de la comunidad: guarda las puertas que reparten y los peques inscritos.
+// Hoja de la comunidad: guarda los ajustes de la fiesta, las puertas que reparten y los peques inscritos.
 // Instalación: README → "Conectar la hoja de Google". Pega este archivo entero en Extensiones → Apps Script.
 
 // 🔑 Clave del panel del gestor (admin.html). Cámbiala por una solo tuya antes de implementar.
@@ -6,7 +6,8 @@ const ADMIN_KEY = "cambia-esta-clave";
 
 const DOORS = { name: "puertas", cols: ["id", "calle", "numero", "etiquetas"] };
 const KIDS = { name: "peques", cols: ["id", "clave", "alias", "edad", "alergias", "creado", "actualizado"] };
-const LIMITS = { alias: 40, age: 20, allergy: 80, kids: 500, doors: 2000 };
+const SETTINGS = { name: "ajustes", cols: ["ajuste", "valor"] };
+const LIMITS = { alias: 40, age: 20, allergy: 80, kids: 500, doors: 2000, portals: 30, floors: 40, letters: 12, streets: 50 };
 const TAGS = ["gluten", "nuts", "lactose", "egg"];
 
 // ---------- Entrada ----------
@@ -77,18 +78,31 @@ const ACTIONS = {
     table(KIDS).deleteRow(i + 2);
     return { ok: true };
   },
-  adminDoorsSave(r) {
+  // Guarda ajustes y puertas de una vez.
+  adminSave(r) {
     admin(r);
-    const doors = (r.doors || []).slice(0, LIMITS.doors).map((d) => [
-      text(d.id, 80), text(d.street, 60), text(d.number, 10),
-      (d.tags || []).filter((t) => TAGS.includes(t)).join(" "),
-    ]).filter((d) => d[0]);
-    const sh = table(DOORS);
-    if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, DOORS.cols.length).clearContent();
-    if (doors.length) sh.getRange(2, 1, doors.length, DOORS.cols.length).setValues(doors);
+    if (r.settings) saveSettings(cleanSettings(r.settings));
+    if (r.doors) saveDoors(r.doors);
     return { ok: true };
   },
 };
+
+function saveSettings(settings) {
+  const rowsOut = Object.keys(settings).map((k) => [k, JSON.stringify(settings[k])]);
+  const sh = table(SETTINGS);
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 2).clearContent();
+  sh.getRange(2, 1, rowsOut.length, 2).setValues(rowsOut);
+}
+
+function saveDoors(list) {
+  const doors = list.slice(0, LIMITS.doors).map((d) => [
+    text(d.id, 80), text(d.street, 60), text(d.number, 10),
+    (d.tags || []).filter((t) => TAGS.includes(t)).join(" "),
+  ]).filter((d) => d[0]);
+  const sh = table(DOORS);
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, DOORS.cols.length).clearContent();
+  if (doors.length) sh.getRange(2, 1, doors.length, DOORS.cols.length).setValues(doors);
+}
 
 function handle(req) {
   const action = ACTIONS[req && req.action];
@@ -99,9 +113,11 @@ function handle(req) {
 // ---------- Datos ----------
 
 function publicData() {
+  const saved = rows(SETTINGS);
+  const settings = saved.length ? Object.fromEntries(saved.map(([k, v]) => [k, JSON.parse(v)])) : null;
   const doors = rows(DOORS).map(([id, street, number, tags]) =>
     ({ id, street, number, tags: tags ? tags.split(" ") : [] }));
-  return { doors, kids: kids().map(({ alias, age, allergy }) => ({ alias, age, allergy })) };
+  return { settings, doors, kids: kids().map(({ alias, age, allergy }) => ({ alias, age, allergy })) };
 }
 
 function kids() {
@@ -126,6 +142,36 @@ function cleanKid(r) {
   const kid = { alias: text(r.alias, LIMITS.alias), age: text(r.age, LIMITS.age), allergy: text(r.allergy, LIMITS.allergy) };
   if (!kid.alias) fail("invalid");
   return kid;
+}
+
+// Ajustes del gestor. Misma lógica que js/settings.js.
+function cleanSettings(s) {
+  const b = s.buildings || {};
+  const time = (v) => (/^\d{2}:\d{2}$/.test(v) ? v : "");
+  const link = (v) => (/^https:\/\/\S+$/.test(v) ? String(v).slice(0, 500) : "");
+  const int = (v, min, max) => Math.min(max, Math.max(min, parseInt(v, 10) || 0));
+  const unique = (list) => list.filter((x, i) => list.indexOf(x) === i);
+  const portals = (Array.isArray(b.portals) ? b.portals : []).slice(0, LIMITS.portals).map((p) => ({ street: text(p && p.street, 60) }));
+  const letters = unique(String(b.letters || "").toUpperCase().replace(/[^A-Z]/g, "").split("")).slice(0, LIMITS.letters).join("");
+  const streets = unique(((s.houses && s.houses.streets) || []).map((x) => text(x, 60)).filter(Boolean)).slice(0, LIMITS.streets);
+  return {
+    community: text(s.community, 60),
+    date: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s.date) ? s.date : "",
+    routeEnd: time(s.routeEnd),
+    partyPlace: text(s.partyPlace, 60),
+    partyStart: time(s.partyStart),
+    partyEnd: time(s.partyEnd),
+    whatsapp: link(s.whatsapp),
+    volunteersForm: link(s.volunteersForm),
+    layout: s.layout === "houses" ? "houses" : "buildings",
+    buildings: {
+      portals: portals.length ? portals : [{ street: "" }],
+      floors: int(b.floors, 0, LIMITS.floors),
+      ground: !!b.ground,
+      letters: letters || "A",
+    },
+    houses: { streets },
+  };
 }
 
 // Texto limpio y corto. Quita = + - @ del principio para que la hoja nunca lo trate como fórmula.
@@ -170,6 +216,7 @@ function json(data) {
 
 // Ejecútala una vez desde el editor (▶ Ejecutar) para crear las pestañas y dar permisos.
 function setup() {
+  table(SETTINGS);
   table(DOORS);
   table(KIDS);
 }

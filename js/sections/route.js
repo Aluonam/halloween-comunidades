@@ -8,11 +8,11 @@ import { ALLERGY as ICON, esc } from "./ui.js";
 // Modo acertijos: step = índice de la puerta a encontrar (en order()), null = modo normal.
 let step = null;
 let msg = "";
-const order = () => layout.sort(data.doors);
+const order = () => layout().sort(data.doors);
 
 function info(door) {
   const tags = (door.tags || []).map((tag) => `${ICON[tag] || ""} ${t("tags")[tag] || tag}`);
-  return esc([`🎃 ${layout.name(door)}`, ...tags].join(" · "));
+  return esc([`🎃 ${layout().name(door)}`, ...tags].join(" · "));
 }
 
 // Cómo se pinta cada puerta; el layout decide dónde va cada una.
@@ -48,7 +48,7 @@ function riddleCard() {
     <div class="riddle">
       ${msg ? `<p class="riddle-msg">${msg}</p>` : ""}
       <p class="riddle-title">🔮 ${t("riddleStep", { i: step + 1, n: list.length })}</p>
-      <ul>${layout.riddle(list[step]).map((line) => `<li>${line}</li>`).join("")}</ul>
+      <ul>${layout().riddle(list[step]).map((line) => `<li>${line}</li>`).join("")}</ul>
       <button type="button" class="btn alt" data-act="hint">${t("hint")}</button>
       <button type="button" class="btn alt" data-act="skip">${t("skip")}</button>
       <button type="button" class="btn alt" data-act="exit">${t("exit")}</button>
@@ -58,20 +58,20 @@ function riddleCard() {
 
 function inner() {
   const n = data.doors.length;
-  const meter = layout.total ? `<div class="meter" aria-hidden="true"><i style="width:${(n / layout.total) * 100}%"></i></div>` : "";
+  const meter = layout().total() ? `<div class="meter" aria-hidden="true"><i style="width:${(n / layout().total()) * 100}%"></i></div>` : "";
   const top = step === null
     ? `${n ? `${meter}
-       <p class="count">${t(layout.countKey, { n, total: layout.total })}</p>
+       <p class="count">${t(layout().countKey + (n === 1 ? "One" : ""), { n, total: layout().total() })}</p>
        <button type="button" class="btn play" data-act="play" data-candy>${t("playRiddles")}</button>` : `<p class="soon">${t("noDoors")}</p>`}`
     : riddleCard();
 
   return `
     <h2>${t("routeTitle")}</h2>
     <p>${t("routeIntro")}</p>
-    ${config.routeEnd ? `<p>🕡 ${config.date.slice(11)} – ${config.routeEnd}</p>` : ""}
+    ${config.routeEnd && config.date ? `<p>🕡 ${config.date.slice(11)} – ${config.routeEnd}</p>` : ""}
     ${top}
-    <div class="buildings">${layout.scene(painter())}</div>
-    <button type="button" class="btn alt next" hidden>${t(layout.nextKey)}</button>
+    <div class="buildings">${layout().scene(painter())}</div>
+    <button type="button" class="btn alt next" hidden>${t(layout().nextKey)}</button>
     <p class="win-info" aria-live="polite">${n && step === null ? t("tapHint") : ""}</p>
     <p class="soon">${t("soon")}</p>`;
 }
@@ -84,7 +84,7 @@ export function mount() {
   const resize = new ResizeObserver(() => {
     el.querySelector(".next").hidden = row().scrollWidth <= row().clientWidth + 4;
   });
-  const groupEl = (door) => [...row().children].find((g) => g.dataset.group === layout.groupOf(door));
+  const groupEl = (door) => [...row().children].find((g) => g.dataset.group === layout().groupOf(door));
 
   // Vuelve a pintar la sección conservando el grupo (portal o calle) que se estaba viendo.
   const refresh = () => {
@@ -107,7 +107,7 @@ export function mount() {
     if (act === "skip") { step++; msg = ""; return refresh(); }
     if (act === "hint") {
       const door = order()[step];
-      el.querySelector(".riddle-hint").textContent = layout.hint(door);
+      el.querySelector(".riddle-hint").textContent = layout().hint(door);
       [...el.querySelectorAll("[data-id]")].find((b) => b.dataset.id === door.id)?.classList.add("lit-row");
       return;
     }

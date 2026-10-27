@@ -3,7 +3,6 @@ main#admin { max-width: 76rem; }
 .login { max-width: 26rem; margin: 15vh auto 0; text-align: center; }
 .login label { display: block; text-align: left; color: var(--muted); }
 .error { color: #ff8a7a; }
-.loading { margin-top: 30vh; text-align: center; font-size: 1.6rem; }
 .admin-head { padding-top: 1.5rem; }
 .admin-head h1 { font-size: 3rem; }
 .admin-head p { margin: 0; }
@@ -50,3 +49,26 @@ main#admin { max-width: 76rem; }
 .savebar.show, .savebar:has(span:not(:empty)) { display: flex; }
 .savebar .btn { margin: 0; }
 main#admin { padding-bottom: 6rem; }
+
+/* Configuración */
+.settings summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 1rem; cursor: pointer; list-style: none; }
+.settings summary::-webkit-details-marker { display: none; }
+.settings summary h2 { margin: 0; }
+.settings summary h2::after { content: " ▾"; font-size: 1.4rem; }
+.settings[open] summary h2::after { content: " ▴"; }
+.settings h3 { margin: 1.4rem 0 0.4rem; color: var(--moon); font-weight: normal; font-size: 1.4rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.2rem 1rem; }
+.grid label, .street-list label { color: var(--muted); margin-bottom: 0.5rem; }
+.check { display: flex; align-items: center; gap: 0.5rem; align-self: end; color: var(--text) !important; }
+.check input { width: 1.2rem; height: 1.2rem; accent-color: var(--pumpkin); }
+.choice { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 0.8rem; }
+.option { flex: 1 1 14rem; padding: 0.8rem 1rem; border: 2px solid var(--purple); border-radius: var(--radius); cursor: pointer; }
+.option.on { border-color: var(--pumpkin); background: #f47b2018; }
+.option input { accent-color: var(--pumpkin); }
+.option small { display: block; color: var(--muted); }
+.street-list { margin: 0 0 0.6rem; padding-left: 1.6rem; }
+.street-list li { margin-bottom: 0.4rem; }
+.street-list li, .inline-form { display: flex; gap: 0.6rem; align-items: center; }
+.street-list input, .inline-form input { flex: 1; margin: 0; }
+.inline-form .btn { margin: 0; white-space: nowrap; }
+.warn { padding: 0.5rem 0.8rem; border-radius: 10px; background: #ffb34722; color: #ffd08a; }

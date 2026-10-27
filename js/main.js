@@ -1,5 +1,5 @@
 import { config } from "./config.js";
-import { demo, loadPublic } from "./api.js";
+import { demo, loadCached, loadPublic } from "./api.js";
 import { getLang, setLang, t } from "./i18n.js";
 import * as fx from "./fx.js";
 import * as hero from "./sections/hero.js";
@@ -9,12 +9,14 @@ import * as kids from "./sections/kids.js";
 import * as rules from "./sections/rules.js";
 import * as contact from "./sections/contact.js";
 
-// Orden de las secciones. Añadir/quitar/reordenar = tocar esta lista.
-const sections = [hero, route, ...(config.partyPlace ? [party] : []), kids, rules, contact];
+// Orden de las secciones. Añadir/quitar/reordenar = tocar esta lista. Sin lugar de minifiesta, no sale.
+const all = [hero, route, party, kids, rules, contact];
+const sections = () => all.filter((s) => s !== party || config.partyPlace);
 
 const app = document.getElementById("app");
 const langBtn = document.getElementById("lang");
 let loadFailed = false;
+let ready = false;
 
 function banner() {
   if (demo) return `<p class="banner">${t("demoBanner")}</p>`;
@@ -22,9 +24,12 @@ function banner() {
 }
 
 function render() {
-  app.innerHTML = banner() + sections.map((s) => s.render()).join("");
-  sections.forEach((s) => s.mount?.());
   langBtn.textContent = t("switchTo");
+  document.title = `Halloween 🎃 ${config.community}`;
+  // Sin ajustes todavía (primera visita): espera a la hoja en lugar de enseñar valores de ejemplo.
+  if (!ready) { app.innerHTML = `<p class="loading">🎃</p>`; return; }
+  app.innerHTML = banner() + sections().map((s) => s.render()).join("");
+  sections().forEach((s) => s.mount?.());
 }
 
 langBtn.addEventListener("click", () => {
@@ -32,12 +37,12 @@ langBtn.addEventListener("click", () => {
   render();
 });
 
-document.title = `Halloween 🎃 ${config.community}`;
 setLang(getLang());
 fx.init();
+ready = loadCached();
 render();
-// Datos de la hoja (puertas y peques): cuando llegan, se repinta todo una vez.
+// Datos de la hoja (ajustes, puertas y peques): cuando llegan, se repinta todo una vez.
 Promise.all([
   loadPublic().catch((e) => { loadFailed = true; console.warn("No se pudo leer la hoja", e); }),
-  ...sections.map((s) => s.load?.()),
-]).then(render);
+  ...all.map((s) => s.load?.()),
+]).then(() => { ready = true; render(); });

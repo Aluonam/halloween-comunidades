@@ -22,14 +22,14 @@ Cada comunidad guarda sus datos en **su propia hoja de Google**.
 2. En tu repositorio nuevo: **Settings → Pages → Branch: `main` / `(root)` → Save**.
    En un par de minutos la web estará en `https://TU-USUARIO.github.io/NOMBRE-DEL-REPO/`.
 
-Sin más pasos ya funciona en **modo demostración** (los datos solo se guardan en tu navegador). Para que sea real, conecta la hoja:
+Sin más pasos ya funciona en **modo demostración** (los datos solo se guardan en tu navegador, clave del gestor `demo`). Para que sea real, conecta la hoja:
 
 ### 2. Conectar la hoja de Google
 
 1. Crea una hoja de cálculo nueva en Google Drive (p. ej. "Halloween comunidad").
 2. **Extensiones → Apps Script**. Borra lo que haya y pega entero [`apps-script/Code.gs`](apps-script/Code.gs).
 3. Cambia la clave del gestor en la línea `const ADMIN_KEY = "cambia-esta-clave";` por una solo tuya. Guarda (💾).
-4. Elige la función `setup` arriba y pulsa **▶ Ejecutar**. Acepta los permisos (es tu propia hoja). Aparecerán las pestañas `puertas` y `peques`.
+4. Elige la función `setup` arriba y pulsa **▶ Ejecutar**. Acepta los permisos (es tu propia hoja). Aparecerán las pestañas `ajustes`, `puertas` y `peques`.
 5. **Implementar → Nueva implementación → ⚙️ Aplicación web**:
    - Ejecutar como: **Yo**
    - Quién tiene acceso: **Cualquier usuario**
@@ -38,29 +38,28 @@ Sin más pasos ya funciona en **modo demostración** (los datos solo se guardan 
 
 > Si más adelante cambias `Code.gs` (o la clave), haz **Implementar → Gestionar implementaciones → ✏️ → Versión: nueva → Implementar**. La URL no cambia.
 
-### 3. Tus datos
+### 3. Configurar la fiesta (desde el panel, sin tocar código)
 
-Edita [`js/config.js`](js/config.js) (en GitHub: abre el archivo → ✏️ → *Commit changes*):
+Entra en `https://.../admin.html` con tu clave y abre **⚙️ Configuración**:
 
-| Quiero…                                        | En `config.js`                    |
-|------------------------------------------------|-----------------------------------|
-| Nombre de la comunidad, fecha y hora           | `community`, `date`               |
-| Edificios o casas                              | `layout: "buildings"` o `"houses"` |
-| Nº de portales, pisos, bajo y letras           | `buildings`                       |
-| Calles para autocompletar (casas)              | `houses.streets`                  |
-| Minifiesta (o quitarla con `null`)             | `partyPlace`, `partyStart`...     |
-| Grupo de WhatsApp, formulario de voluntarios   | `whatsapp`, `volunteersForm`      |
-| Cartel                                         | sube la imagen a `img/` y rellena `poster` |
+- **La fiesta**: nombre de la comunidad, día, hora de inicio y fin del recorrido.
+- **Minifiesta**: lugar y horario (deja el lugar vacío si no hay).
+- **Enlaces**: grupo de WhatsApp y formulario de voluntarios.
+- **Tipo de urbanización**:
+  - 🏢 *Edificios*: nº de portales, pisos, si hay viviendas en el bajo, letras de cada planta y la calle de cada portal.
+  - 🏡 *Casas*: las calles participantes, en el orden del recorrido.
 
-Otros cambios: textos en `js/i18n.js`, colores y fuentes en `css/base.css`, orden de secciones en `js/main.js`.
+Pulsa **💾 Guardar** y la web se actualiza al momento. Si reduces portales, pisos o letras (o quitas una calle), el panel avisa de las puertas que dejarán de existir.
+
+Solo queda en código (`js/config.js`): la URL de la hoja y el cartel (sube la imagen a `img/` y rellena `poster`). Textos en `js/i18n.js`, colores en `css/base.css`.
 
 ---
 
 ## Uso durante la fiesta
 
-**Gestor** → `https://.../admin.html` con tu clave.
+**Gestor** → `https://.../admin.html` con tu clave, sección **Quién reparte**.
 - *Edificios*: toca una ventana para encenderla 🎃 (esa puerta reparte); tócala otra vez para marcar "sin gluten", "sin frutos secos"... o quitarla.
-- *Casas*: escribe calle y número y pulsa **Añadir casa**.
+- *Casas*: elige la calle, escribe el número y pulsa **Añadir casa**.
 - Pulsa **💾 Guardar**: se ve en la web al momento.
 - Abajo ves los peques inscritos y puedes borrar lo que no deba estar.
 
@@ -76,8 +75,9 @@ Los vecinos que quieran repartir se lo piden al gestor (por WhatsApp, en persona
 
 ```
 index.html · admin.html     web pública · panel del gestor
-apps-script/Code.gs         "servidor" en la hoja de Google de la comunidad
-js/config.js                ⚙️ datos de la comunidad
+apps-script/Code.gs         "servidor" en la hoja de Google (pestañas ajustes, puertas, peques)
+js/config.js                URL de la hoja, cartel y valores de partida
+js/settings.js              validación de los ajustes del gestor
 js/api.js                   conexión con la hoja (y modo demostración)
 js/layouts/                 buildings.js (portales) · houses.js (casas): dibujo y acertijos
 js/sections/                cada sección de la web

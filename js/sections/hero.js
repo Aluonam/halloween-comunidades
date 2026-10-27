@@ -9,7 +9,7 @@ const stars = Array.from({ length: 45 }, () =>
 ).join("");
 
 export function render() {
-  const day = new Date(config.date).toLocaleDateString(getLang(), { weekday: "long", day: "numeric", month: "long" });
+  const day = config.date && new Date(config.date).toLocaleDateString(getLang(), { weekday: "long", day: "numeric", month: "long" });
   const time = config.date.slice(11);
 
   return `
@@ -21,7 +21,7 @@ export function render() {
         <h1><small>${t("titleTop")}</small><span>${t("titleMain")}</span></h1>
         <p class="community">${esc(config.community)}</p>
         <p class="tagline">${t("tagline")}</p>
-        <p class="when">📅 ${day} · 🕡 ${time} h</p>
+        <p class="when">${day ? `📅 ${day} · 🕡 ${time} h` : `📅 ${t("tbc")}`}</p>
         <div class="countdown" id="countdown" aria-live="off"></div>
         <div class="actions">
           <a class="btn" href="#route" data-candy>${t("seeRoute")}</a>
@@ -61,6 +61,8 @@ export function mount() {
 
   const el = document.getElementById("countdown");
   const target = new Date(config.date);
+  clearInterval(timer);
+  if (!config.date) return;
   const tick = () => {
     const s = Math.floor((target - Date.now()) / 1000);
     if (s <= 0) { el.innerHTML = `<p class="started">${t("started")}</p>`; return clearInterval(timer); }

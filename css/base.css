@@ -109,3 +109,5 @@ button { font: inherit; }
   transition: 0.2s;
 }
 .say.talk::after { opacity: 1; transform: translate(-50%, -6px) scale(1); }
+
+.loading { margin-top: 30vh; text-align: center; font-size: 1.6rem; }

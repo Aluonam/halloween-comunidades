@@ -1,7 +1,8 @@
 // Panel del gestor: ajustes de la fiesta (fecha, edificios o casas, calles...), quién reparte chuches
 // y revisión de las inscripciones de peques. Solo en español. La clave se comprueba en la hoja (apps-script/Code.gs).
 import { applySettings, config, SETTINGS } from "./config.js";
-import { api, demo } from "./api.js";
+import { api, connect, site } from "./api.js";
+import { qrSvg, shareLink } from "./share.js";
 import { setLang } from "./i18n.js";
 import { layout } from "./layouts/index.js";
 import { cleanSettings, LIMITS } from "./settings.js";
@@ -9,7 +10,9 @@ import { ALLERGY, esc } from "./sections/ui.js";
 
 setLang("es");
 const TAG_NAMES = { gluten: "sin gluten", nuts: "sin frutos secos", lactose: "sin lactosa", egg: "sin huevo" };
-const SESSION = "halloween-admin";
+const SESSION = `halloween-admin-${site.slug || "demo"}`;
+const demo = site.demo;
+const home = `./${location.search}`;
 
 const root = document.getElementById("admin");
 let key = "";
@@ -24,7 +27,11 @@ try { key = sessionStorage.getItem(SESSION) || ""; } catch {}
 
 const byId = () => Object.fromEntries(doors.map((d) => [d.id, d]));
 const lost = () => doors.filter((d) => !layout().fits(d));
-const errorText = (e) => ({ auth: "Clave incorrecta.", network: "No se pudo conectar con la hoja." })[e.code] || `Error: ${e.code || e.message}`;
+const errorText = (e) => ({
+  auth: "Clave incorrecta.",
+  network: "No se pudo conectar con la hoja.",
+  notfound: "No hay ninguna comunidad con esta dirección.",
+})[e.code] || `Error: ${e.code || e.message}`;
 const settings = () => Object.fromEntries(SETTINGS.map((k) => [k, config[k]]));
 
 // ---------- Pantallas ----------
@@ -39,7 +46,8 @@ function login(error = "") {
       </form>
       ${error ? `<p class="error">${error}</p>` : ""}
       ${demo ? `<p class="soon">Modo demostración: la clave es <b>demo</b>.</p>` : ""}
-      <p><a href="./">← Volver a la web</a></p>
+      <p><a href="${home}">← Volver a la web</a></p>
+      <p class="help">¿Has olvidado la clave? Cámbiala desde tu hoja de Google: menú 🎃 Halloween → Cambiar la clave del gestor.</p>
     </section>`;
 }
 
@@ -181,9 +189,20 @@ function panel() {
   root.innerHTML = `
     <header class="admin-head">
       <h1>🧙 Gestor</h1>
-      <p>${esc(config.community)} · <a href="./" target="_blank">Ver la web</a> · <button type="button" class="link" data-act="logout">Salir</button></p>
+      <p>${esc(config.community)} · <a href="${home}" target="_blank">Ver la web</a> · <button type="button" class="link" data-act="logout">Salir</button></p>
       ${demo ? `<p class="banner">🧪 Modo demostración: los cambios solo se guardan en este navegador.</p>` : ""}
     </header>
+
+    <section class="card share">
+      <div>
+        <h2>Tu web</h2>
+        <p>Comparte este enlace con los vecinos (o imprime el QR para el portal):</p>
+        <p class="share-link"><a href="${esc(shareLink())}" target="_blank">${esc(shareLink())}</a></p>
+        <button type="button" class="btn alt small" data-act="copy-link">🔗 Copiar enlace</button>
+        <a class="btn alt small" download="qr-halloween.svg" href="data:image/svg+xml;charset=utf-8,${encodeURIComponent(qrSvg(shareLink()))}">⬇️ Descargar QR</a>
+      </div>
+      <div class="qr">${qrSvg(shareLink())}</div>
+    </section>
 
     <details class="card settings" ${settingsOpen || !config.community ? "open" : ""}>
       <summary><h2>⚙️ Configuración</h2><span class="help">Nombre, fecha y hora, edificios o casas, calles...</span></summary>
@@ -191,6 +210,9 @@ function panel() {
       ${generalForm()}
       <h3>Tipo de urbanización</h3>
       ${structureForm()}
+      <h3>Nueva edición</h3>
+      <p class="help">¿Otro año? Vacía las puertas y las inscripciones de peques y conserva esta configuración.</p>
+      <button type="button" class="btn danger" data-act="new-edition">🧹 Empezar nueva edición</button>
     </details>
 
     <section class="card">
@@ -215,6 +237,7 @@ function panel() {
 async function enter(k) {
   root.innerHTML = `<p class="loading">Cargando…</p>`;
   try {
+    await connect();
     await api("adminCheck", { key: k });
     key = k;
     try { sessionStorage.setItem(SESSION, k); } catch {}
@@ -359,6 +382,26 @@ root.addEventListener("click", async (e) => {
   if (!btn) return;
   const { act, id } = btn.dataset;
   if (act === "save") return save();
+  if (act === "copy-link") {
+    try { await navigator.clipboard.writeText(shareLink()); btn.textContent = "Copiado ✓"; }
+    catch { prompt("Enlace de tu web", shareLink()); }
+    return;
+  }
+  if (act === "new-edition") {
+    if (dirty) { status = "Guarda o descarta antes los cambios pendientes."; return updateBar(); }
+    if (!confirm("Se borrarán todas las puertas y todas las inscripciones de peques. La configuración se conserva. ¿Seguir?")) return;
+    try {
+      await api("adminNewEdition", { key });
+      doors = [];
+      kids = [];
+      selected = null;
+      status = "Nueva edición lista ✓";
+    } catch (e) {
+      status = errorText(e);
+    }
+    panel();
+    return;
+  }
   if (act === "close") { selected = null; return panel(); }
   if (act === "remove") { doors = doors.filter((d) => d.id !== id); selected = null; return touch(); }
   if (act === "street-remove") {

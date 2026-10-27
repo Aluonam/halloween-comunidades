@@ -1,4 +1,4 @@
-import { api, data, loadPublic } from "../api.js";
+import { api, data, loadPublic, site } from "../api.js";
 import { candy } from "../fx.js";
 import { t } from "../i18n.js";
 import { avatars, fallback } from "../data/avatars.js";
@@ -6,7 +6,7 @@ import { esc } from "./ui.js";
 
 // Inscripción de peques: cada familia se apunta desde la web y recibe un enlace privado
 // (#peque=id.clave) para cambiar o borrar su inscripción. Este dispositivo recuerda las suyas.
-const MINE = "halloween-mine";
+const MINE = `halloween-mine-${site.slug || "demo"}`;
 
 let editing = null; // { id, token, alias, age, allergy } mientras se edita una inscripción propia
 let notice = "";    // mensaje tras enviar (HTML)
@@ -19,7 +19,7 @@ function setMine(list) {
   try { localStorage.setItem(MINE, JSON.stringify(list)); } catch {}
 }
 
-const linkOf = ({ id, token }) => `${location.origin}${location.pathname}#peque=${id}.${token}`;
+const linkOf = ({ id, token }) => `${location.origin}${location.pathname}${location.search}#peque=${id}.${token}`;
 
 // Respuestas que significan "sin alergias".
 const NONE = /^(|no|ninguna?|nada|none|nope|-+|n\/?a)\.?$/i;

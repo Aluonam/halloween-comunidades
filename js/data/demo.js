@@ -1,4 +1,4 @@
-// Datos de ejemplo para el modo demostración (cuando config.api está vacío).
+// Datos de ejemplo para el modo demostración (sin ?c=comunidad, o ?c=demo).
 const kids = [
   { alias: "Bruja Piruja", age: "6", allergy: "" },
   { alias: "Vampirito", age: "4", allergy: "frutos secos" },

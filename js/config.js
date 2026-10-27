@@ -1,13 +1,15 @@
-// ⚙️ Configuración técnica. Lo demás (nombre, fecha, edificios o casas, calles...) lo decide el gestor
-// desde admin.html y se guarda en la hoja de la comunidad.
+// ⚙️ Configuración de la plataforma (la pone el propietario una vez, ver docs/PROPIETARIO.md).
+// Lo de cada comunidad (nombre, fecha, edificios o casas, calles...) lo decide su gestor desde admin.html
+// y se guarda en la hoja de esa comunidad.
 export const config = {
-  // Hoja de Google de la comunidad: URL de la aplicación web de Apps Script (README → "Conectar la hoja").
-  // Vacío = modo demostración: los datos solo se guardan en este navegador.
-  api: "",
+  // Registro de comunidades: URL de la aplicación web de apps-script/Registro.gs.
+  // Vacío = solo modo demostración.
+  registry: "",
 
-  // Cartel (opcional): sube la imagen a la carpeta img/ y pon su ruta.
-  // poster: { image: "img/cartel.jpg", credit: "Eva", note: "Busca el QR en tu portal" },
-  poster: null,
+  // Hoja plantilla que copia cada comunidad al darse de alta (enlace que acaba en /copy).
+  templateSheet: "",
+
+  poster: null,       // cartel común: { image: "img/cartel.jpg", credit: "...", note: "..." }
   partyDetails: null, // { es: "Juegos, merienda...", en: "Games, snacks..." }
 
   // ---- Ajustes del gestor ----

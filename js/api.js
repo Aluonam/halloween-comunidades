@@ -1,11 +1,14 @@
-// Conexión con la hoja de la comunidad (Apps Script, ver apps-script/Code.gs).
-// Sin config.api funciona en modo demostración: las mismas acciones, guardadas en este navegador.
+// Conexión con la hoja de cada comunidad (apps-script/Code.gs) y con el registro de la plataforma
+// (apps-script/Registro.gs), que dice qué hoja corresponde a cada ?c=direccion.
+// Sin comunidad (o ?c=demo) funciona en modo demostración: las mismas acciones, guardadas en este navegador.
 import { applySettings, config } from "./config.js";
 import { cleanSettings, text } from "./settings.js";
 import { demoData } from "./data/demo.js";
 import { layout } from "./layouts/index.js";
 
-export const demo = !config.api;
+const params = new URLSearchParams(location.search);
+export const site = { slug: (params.get("c") || "").toLowerCase(), demo: true, api: "", name: "" };
+site.demo = !site.slug || site.slug === "demo" || !config.registry;
 
 // Datos públicos que pinta la web.
 export const data = { doors: [], kids: [] };
@@ -14,24 +17,50 @@ export class ApiError extends Error {
   constructor(code) { super(code); this.code = code; }
 }
 
-export async function api(action, body = {}) {
-  if (demo) return local(action, body);
+async function post(url, action, body = {}) {
   let res;
   try {
     // text/plain evita la petición previa de CORS, que Apps Script no admite.
-    res = await fetch(config.api, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action, ...body }) });
+    res = await fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action, ...body }) });
   } catch {
     throw new ApiError("network");
   }
   if (!res.ok) throw new ApiError("network");
-  const out = await res.json();
+  let out;
+  try { out = await res.json(); } catch { throw new ApiError("badapi"); }
   if (out.error) throw new ApiError(out.error);
   return out;
 }
 
+// Hoja de la comunidad abierta.
+export const api = (action, body) => (site.demo ? local(action, body || {}) : post(site.api, action, body));
+// Registro de la plataforma.
+export const registry = (action, body) => (config.registry ? post(config.registry, action, body) : Promise.reject(new ApiError("network")));
+// Una hoja concreta (asistente de alta, antes de que la comunidad exista).
+export const sheet = (url, action, body) => post(url, action, body);
+
+// Busca la hoja de la comunidad. Se recuerda en el navegador: la próxima visita no espera al registro.
+export async function connect() {
+  if (site.demo) return;
+  const key = `halloween-site-${site.slug}`;
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(key)); } catch {}
+  const fresh = registry("resolve", { slug: site.slug }).then((r) => {
+    try { localStorage.setItem(key, JSON.stringify(r)); } catch {}
+    return r;
+  }, (e) => {
+    if (e.code === "notfound") try { localStorage.removeItem(key); } catch {}
+    throw e;
+  });
+  if (cached) fresh.catch(() => {});
+  const found = cached || await fresh;
+  site.api = found.api;
+  site.name = found.name;
+}
+
 // Ajustes + puertas + peques. Se guardan en el navegador para pintar al instante la próxima visita.
-const CACHE = `halloween-cache-${config.api}`;
-const set = new URLSearchParams(location.search).get("layout") === "houses" ? "houses" : "buildings";
+const CACHE = `halloween-cache-${site.slug}`;
+const set = params.get("layout") === "houses" ? "houses" : "buildings";
 
 function use(out) {
   applySettings(out.settings);
@@ -40,7 +69,7 @@ function use(out) {
 }
 
 export function loadCached() {
-  if (demo) return false;
+  if (site.demo) return false;
   try {
     const out = JSON.parse(localStorage.getItem(CACHE));
     if (out) { use(out); return true; }
@@ -51,7 +80,7 @@ export function loadCached() {
 export async function loadPublic() {
   const out = await api("public");
   use(out);
-  try { localStorage.setItem(CACHE, JSON.stringify(out)); } catch {}
+  if (!site.demo) try { localStorage.setItem(CACHE, JSON.stringify(out)); } catch {}
 }
 
 // ---------- Modo demostración ----------
@@ -122,6 +151,14 @@ function local(action, b) {
     case "adminKidDelete":
       admin();
       db.kids = db.kids.filter((k) => k.id !== b.id);
+      save(db);
+      return { ok: true };
+    case "ping":
+      return { app: "halloween", version: 1, claimed: true };
+    case "adminNewEdition":
+      admin();
+      db.doors = [];
+      db.kids = [];
       save(db);
       return { ok: true };
     case "adminSave":

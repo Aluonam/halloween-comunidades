@@ -128,7 +128,10 @@ const dict = {
     contactTitle: "Contacto",
     contactText: "¿Dudas o ideas? Escríbenos en el grupo de WhatsApp de la comunidad.",
     epitaph: "Aquí yace el aburrimiento",
-    demoBanner: "🧪 Modo demostración: los datos solo se guardan en este navegador. Panel del gestor: <a href=\"admin.html\">admin.html</a> (clave: demo).",
+    demoBanner: "🧪 Modo demostración: los datos solo se guardan en este navegador. Panel del gestor: <a href=\"{admin}\">admin.html</a> (clave: demo).",
+    missing: "No hay ninguna comunidad con esta dirección. Revisa el enlace que te han pasado.",
+    seeDemo: "Ver la demostración",
+    privacy: "Privacidad",
     loadError: "⚠️ No se pudieron cargar las puertas y los peques. Recarga la página en un momento.",
   },
   en: {
@@ -259,7 +262,10 @@ const dict = {
     contactTitle: "Contact",
     contactText: "Questions or ideas? Message us in the community WhatsApp group.",
     epitaph: "Here lies boredom",
-    demoBanner: "🧪 Demo mode: data is only saved in this browser. Organiser panel: <a href=\"admin.html\">admin.html</a> (key: demo).",
+    demoBanner: "🧪 Demo mode: data is only saved in this browser. Organiser panel: <a href=\"{admin}\">admin.html</a> (key: demo).",
+    missing: "There is no community at this address. Check the link you were given.",
+    seeDemo: "See the demo",
+    privacy: "Privacy",
     loadError: "⚠️ Could not load doors and kids. Reload the page in a moment.",
   },
 };

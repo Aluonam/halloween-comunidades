@@ -415,3 +415,9 @@ input:focus { outline: none; border-color: var(--pumpkin); }
 .banner { position: relative; z-index: 5; margin: 0.8rem 0; padding: 0.6rem 1rem; border-radius: var(--radius); background: #f8e3b0; color: var(--ink); font-size: 1rem; text-align: center; }
 .banner a { color: #b4470d; }
 .address { margin: 0; padding: 0.15rem 0.4rem; background: #2e2050; border-inline: 3px solid #18102b; color: var(--moon); font-size: 0.95rem; text-align: center; }
+.legal { margin: 0 0 1rem; font-size: 1rem; }
+.legal a { color: var(--muted); }
+.legal-page h1 { font-size: 3rem; }
+.legal-page h2 { font-size: 1.8rem; margin-top: 1.4rem; }
+.missing { text-align: center; }
+.missing h2 { font-size: 4rem; }

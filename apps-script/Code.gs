@@ -1,8 +1,8 @@
 // Hoja de la comunidad: guarda los ajustes de la fiesta, las puertas que reparten y los peques inscritos.
-// Instalación: README → "Conectar la hoja de Google". Pega este archivo entero en Extensiones → Apps Script.
-
-// 🔑 Clave del panel del gestor (admin.html). Cámbiala por una solo tuya antes de implementar.
-const ADMIN_KEY = "cambia-esta-clave";
+// Va dentro de la hoja plantilla que copia cada comunidad (guía: docs/PROPIETARIO.md).
+// La clave del gestor la elige la comunidad al crear su web (acción claim) y se guarda cifrada en las
+// propiedades del script; se puede cambiar desde el menú 🎃 Halloween de la hoja.
+const APP = "halloween";
 
 const DOORS = { name: "puertas", cols: ["id", "calle", "numero", "etiquetas"] };
 const KIDS = { name: "peques", cols: ["id", "clave", "alias", "edad", "alergias", "creado", "actualizado"] };
@@ -35,6 +35,16 @@ function doPost(e) {
 
 const ACTIONS = {
   public: () => publicData(),
+
+  // El asistente de alta comprueba que la URL es una hoja de Halloween y si ya tiene gestor.
+  ping: () => ({ app: APP, version: 1, claimed: !!props().getProperty("ADMIN_HASH") }),
+
+  // Primera clave del gestor. Solo funciona una vez; después se cambia desde el menú de la hoja.
+  claim(r) {
+    if (props().getProperty("ADMIN_HASH")) fail("claimed");
+    setKey(r.key);
+    return { ok: true };
+  },
 
   // Familias: crean su inscripción y la cambian o borran con su clave privada.
   kidCreate(r) {
@@ -78,6 +88,16 @@ const ACTIONS = {
     table(KIDS).deleteRow(i + 2);
     return { ok: true };
   },
+  // Nueva edición (otro año): vacía puertas y peques, conserva los ajustes.
+  adminNewEdition(r) {
+    admin(r);
+    [DOORS, KIDS].forEach((t) => {
+      const sh = table(t);
+      if (sh.getLastRow() > 1) sh.deleteRows(2, sh.getLastRow() - 1);
+    });
+    return { ok: true };
+  },
+
   // Guarda ajustes y puertas de una vez.
   adminSave(r) {
     admin(r);
@@ -132,10 +152,32 @@ function ownKid(r) {
 }
 
 function admin(r) {
-  if (ADMIN_KEY === "cambia-esta-clave" || r.key !== ADMIN_KEY) {
+  const saved = props().getProperty("ADMIN_HASH");
+  if (!saved || hash(String(r.key || "")) !== saved) {
     Utilities.sleep(1000); // frena a quien intente adivinar la clave
     fail("auth");
   }
+}
+
+// ---------- Clave del gestor ----------
+
+function props() {
+  return PropertiesService.getScriptProperties();
+}
+
+function hash(key) {
+  let salt = props().getProperty("SALT");
+  if (!salt) {
+    salt = Utilities.getUuid();
+    props().setProperty("SALT", salt);
+  }
+  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + key, Utilities.Charset.UTF_8);
+  return Utilities.base64Encode(bytes);
+}
+
+function setKey(key) {
+  if (String(key || "").length < 6) fail("weakkey");
+  props().setProperty("ADMIN_HASH", hash(String(key)));
 }
 
 function cleanKid(r) {
@@ -214,7 +256,42 @@ function json(data) {
   return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }
 
-// Ejecútala una vez desde el editor (▶ Ejecutar) para crear las pestañas y dar permisos.
+// ---------- Menú de la hoja ----------
+
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu("🎃 Halloween")
+    .addItem("1. Activar la hoja", "activate")
+    .addItem("Cambiar la clave del gestor", "changeKey")
+    .addToUi();
+}
+
+// Pide los permisos, crea las pestañas y explica cómo publicar.
+function activate() {
+  setup();
+  SpreadsheetApp.getUi().alert("✅ Hoja activada",
+    "Ahora publícala para tu web:\n\n" +
+    "1. Extensiones → Apps Script.\n" +
+    "2. Arriba a la derecha: Implementar → Nueva implementación.\n" +
+    "3. En ⚙️ elige «Aplicación web».\n" +
+    "4. Ejecutar como: Yo · Quién tiene acceso: Cualquier usuario.\n" +
+    "5. Implementar → Autorizar acceso → copia la «URL de la aplicación web».\n\n" +
+    "Pega esa URL en el asistente de alta de tu comunidad.",
+    SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+function changeKey() {
+  const ui = SpreadsheetApp.getUi();
+  const res = ui.prompt("Nueva clave del gestor", "Mínimo 6 caracteres. Sirve para entrar en el panel del gestor de tu web.", ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+  try {
+    setKey(res.getResponseText());
+    ui.alert("✅ Clave cambiada.");
+  } catch (err) {
+    ui.alert("La clave debe tener al menos 6 caracteres.");
+  }
+}
+
+// Crea las pestañas (también lo hace «Activar la hoja»).
 function setup() {
   table(SETTINGS);
   table(DOORS);

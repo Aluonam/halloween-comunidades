@@ -25,6 +25,9 @@ Plataforma para que comunidades de vecinos tengan su web de la fiesta de Hallowe
 
 Puesta en marcha (una vez): **[docs/PROPIETARIO.md](docs/PROPIETARIO.md)**.
 
+> **¿Prefieres tener la web en tu propio GitHub?** Existe una versión independiente, para una sola comunidad y sin invitaciones:
+> **[halloween-mi-comunidad](https://github.com/Aluonam/halloween-mi-comunidad)** (fork + tu hoja de Google, con actualizaciones automáticas).
+
 ## Estructura
 
 ```

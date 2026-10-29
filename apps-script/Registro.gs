@@ -2,7 +2,7 @@
 // No guarda datos de vecinos ni de peques: esos están en la hoja de cada comunidad.
 // Guía de instalación: docs/PROPIETARIO.md.
 
-// 🔑 Clave maestra de superadmin.html. Cámbiala por una larga y solo tuya antes de implementar.
+// 🔑 Clave maestra de superadmin.html. Cámbiala por una larga (mínimo 12 caracteres) y solo tuya antes de implementar.
 const MASTER_KEY = "cambia-esta-clave-maestra";
 
 // URL válida de la hoja de una comunidad (aplicación web de Apps Script).
@@ -18,16 +18,20 @@ const COMMUNITIES = { name: "comunidades", cols: ["direccion", "nombre", "hoja",
 function doPost(e) {
   const lock = LockService.getScriptLock();
   let out;
+  let slow = false;
   try {
     const req = JSON.parse(e.postData.contents);
     lock.waitLock(10000);
     out = handle(req);
   } catch (err) {
     out = { error: err.code || "server" };
+    slow = !!err.slow;
     if (!err.code) console.error(err);
   } finally {
     lock.releaseLock();
   }
+  // Frena a quien intente adivinar claves, sin dejar la hoja bloqueada a los demás mientras espera.
+  if (slow) Utilities.sleep(1000);
   return json(out);
 }
 
@@ -125,17 +129,14 @@ function communities() {
 function validInvite(code) {
   const i = invites().find((x) => x.code === String(code || "").trim().toUpperCase());
   if (!i || i.used || Date.parse(i.expires) < Date.now()) {
-    Utilities.sleep(1000); // frena a quien intente adivinar invitaciones
-    fail("badinvite");
+    fail("badinvite", true);
   }
   return i;
 }
 
 function owner(r) {
-  if (MASTER_KEY === "cambia-esta-clave-maestra" || r.key !== MASTER_KEY) {
-    Utilities.sleep(1000);
-    fail("auth");
-  }
+  // Sin cambiar, o demasiado corta, no abre nada.
+  if (MASTER_KEY === "cambia-esta-clave-maestra" || MASTER_KEY.length < 12 || r.key !== MASTER_KEY) fail("auth", true);
 }
 
 function text(v, max) {
@@ -162,9 +163,11 @@ function rows(t) {
   return sh.getRange(2, 1, sh.getLastRow() - 1, t.cols.length).getDisplayValues();
 }
 
-function fail(code) {
+// slow = la respuesta espera 1 s (intento fallido de clave o invitación).
+function fail(code, slow) {
   const err = new Error(code);
   err.code = code;
+  err.slow = !!slow;
   throw err;
 }
 

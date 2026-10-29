@@ -5,7 +5,7 @@ Plataforma para que comunidades de vecinos tengan su web de la fiesta de Hallowe
 - **Recorrido de truco o trato** con las puertas que reparten chuches y un **juego de acertijos** para encontrarlas.
 - Para **edificios** (portales, pisos y letras) o **casas** (calles y números).
 - **Panel del gestor** (`admin.html`): fecha y hora, tipo de urbanización, portales o calles, quién reparte, enlace y **QR** para el cartel.
-- **Inscripción de peques autogestionada**, con enlace privado para cambiarla o borrarla.
+- **Inscripción de peques autogestionada**: varios hermanos de una vez, con enlace privado para cambiarla, añadir más o borrarla, aviso de qué datos son públicos y máximo de plazas (100 por defecto).
 - Español e inglés. HTML + CSS + JS nativo, sin dependencias ni compilación. Fuentes servidas desde la propia web.
 
 **Demo:** https://aluonam.github.io/halloween-comunidades/ (gestor: [admin.html](https://aluonam.github.io/halloween-comunidades/admin.html), clave `demo`; también [casas](https://aluonam.github.io/halloween-comunidades/?layout=houses)).

@@ -13,7 +13,7 @@ Guarda las invitaciones y la lista de comunidades (nombre, dirección y URL de s
 
 1. En Google Drive: **Nuevo → Hojas de cálculo de Google**. Llámala, por ejemplo, `Halloween · Registro`.
 2. **Extensiones → Apps Script**. Borra lo que haya y pega entero [`apps-script/Registro.gs`](../apps-script/Registro.gs).
-3. Cambia la clave maestra en `const MASTER_KEY = "cambia-esta-clave-maestra";` por una **larga** y solo tuya. Guarda (💾).
+3. Cambia la clave maestra en `const MASTER_KEY = "cambia-esta-clave-maestra";` por una **larga** (mínimo 12 caracteres; si es más corta, el panel no abre) y solo tuya. Guarda (💾).
 4. Arriba, elige la función `setup` y pulsa **▶ Ejecutar**. Acepta los permisos
    (*Configuración avanzada → Ir a… → Permitir*; es tu propio script).
 5. **Implementar → Nueva implementación → ⚙️ Aplicación web**

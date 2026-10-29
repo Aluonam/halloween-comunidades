@@ -21,7 +21,7 @@ const ERRORS = {
   badslug: "La dirección solo puede tener minúsculas, números y guiones (3 a 40 caracteres).",
   unclaimed: "La hoja no tiene clave de gestor. Vuelve a intentarlo.",
   auth: "Esta hoja ya tiene gestor y la clave no coincide. Escribe la clave que pusiste la primera vez.",
-  weakkey: "La clave debe tener al menos 6 caracteres.",
+  weakkey: "Clave demasiado fácil: usa al menos 10 caracteres y evita palabras típicas como «halloween» o «contraseña».",
 };
 const errorText = (e) => ERRORS[e.code] || `Algo ha fallado (${e.code || e.message}). Inténtalo de nuevo.`;
 
@@ -79,8 +79,8 @@ function form() {
           <label>Dirección de tu web<input name="slug" required maxlength="40" placeholder="los-olmos" autocomplete="off"></label>
           <p class="help preview">${esc(base)}?c=<b class="slug-preview">…</b></p>
           <div class="grid">
-            <label>Clave del gestor<input name="key" type="password" required minlength="6" autocomplete="new-password"></label>
-            <label>Repite la clave<input name="key2" type="password" required minlength="6" autocomplete="new-password"></label>
+            <label>Clave del gestor <small>(mínimo 10 caracteres)</small><input name="key" type="password" required minlength="10" autocomplete="new-password"></label>
+            <label>Repite la clave<input name="key2" type="password" required minlength="10" autocomplete="new-password"></label>
           </div>
           <p class="help">Con esta clave entrarás al panel del gestor. Si la olvidas, puedes cambiarla desde tu hoja (menú 🎃 Halloween).</p>
           <button class="btn" ${busy ? "disabled" : ""}>${busy ? "Creando…" : "🎃 Crear mi web"}</button>
@@ -149,7 +149,7 @@ root.addEventListener("submit", async (e) => {
   const key = f.key.value;
   if (!sheetOk) return fail("Primero pega y comprueba la URL de tu hoja (paso 2).");
   if (!SLUG_PATTERN.test(slug) || slug === "demo") return fail(ERRORS.badslug);
-  if (key.length < 6) return fail(ERRORS.weakkey);
+  if (key.length < 10) return fail(ERRORS.weakkey);
   if (key !== f.key2.value) return fail("Las dos claves no coinciden.");
 
   busy = true;
